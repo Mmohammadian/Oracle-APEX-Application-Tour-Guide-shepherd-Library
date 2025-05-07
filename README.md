@@ -40,3 +40,8 @@ PL/SQL Code :
     htp.p(APEX_JSON.get_clob_output);
     APEX_JSON.free_output;
 END;
+
+
+#any item you want have tour add css class
+add specific css class for that item from table TBL_APPLICATION_TOUR
+Now you can run page and check your application tour

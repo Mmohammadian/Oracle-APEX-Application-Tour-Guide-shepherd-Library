@@ -8,7 +8,7 @@ tether.min.js
 
 # run Application tour table.sql file
 
-#go to the navigation bar and add new entry
+# go to the navigation bar and add new entry
 Image/Class       : fa-info-circle;
 List Entry Label  : &nbsp;
 Target type       : URL;

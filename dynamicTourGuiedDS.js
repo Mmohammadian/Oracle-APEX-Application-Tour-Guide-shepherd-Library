@@ -38,18 +38,18 @@ function getDataForTour(pClassName) {
                     let result = typeof data === 'string' ? JSON.parse(data.trim()) : data;
                     if (Array.isArray(result) && result.length > 0) {
                         resolve({
-                            tour_title: result[0].TOUR_TITLE || 'مرحله بدون عنوان',
-                            tour_text: result[0].TOUR_TEXT || 'بدون توضیحات'
+                            tour_title: result[0].TOUR_TITLE || 'No title',
+                            tour_text: result[0].TOUR_TEXT || 'No description'
                         });
                     } else {
                         resolve({
-                            tour_title: 'مرحله بدون عنوان',
-                            tour_text: 'داده‌ای برای ' + pClassName + ' یافت نشد'
+                            tour_title: 'step with out title',
+                            tour_text: 'No data forund for' + pClassName
                         });
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('خطا در دریافت داده‌ها:', error);
+                    console.error('Error to get data', error);
                     reject(error);
                 }
             }
@@ -63,13 +63,13 @@ function getStepCount() {
 
 function addStep(tour, pStepName, pStepTitle, pStepText, pAttachToElement, pPosition, index, totalSteps) {
     const isStp1 = $(pAttachToElement).hasClass('stp1');
-    const isLastStep = index === totalSteps - 1; // بررسی اینکه آیا مرحله آخر است
+    const isLastStep = index === totalSteps - 1; // Is a last step?
 
     const buttons = [];
 
     if (!isLastStep) {
         buttons.push({
-            text: 'بستن',
+            text: 'Close',
             classes: 'shepherd-button-secondary',
             action: function() { return tour.cancel(); }
         });
@@ -77,7 +77,7 @@ function addStep(tour, pStepName, pStepTitle, pStepText, pAttachToElement, pPosi
 
     if (!isStp1) {
         buttons.push({
-            text: 'قبلی',
+            text: 'Pervius',
             classes: 'shepherd-button-secondary',
             action: function() { return tour.back(); },
             disabled: index === 0
@@ -85,7 +85,7 @@ function addStep(tour, pStepName, pStepTitle, pStepText, pAttachToElement, pPosi
     }
 
     buttons.push({
-        text: isLastStep ? 'پایان' : 'بعدی',
+        text: isLastStep ? 'End' : 'Next',
         action: tour.next,
         classes: 'shepherd-button-example-primary'
     });
@@ -149,7 +149,7 @@ function startTour(pCssClass, pAppID, pPageId) {
                 })).catch(error => {
                     return {
                         element: $(element),
-                        data: { tour_title: 'مرحله بدون عنوان', tour_text: 'خطا در دریافت داده‌ها' },
+                        data: { tour_title: 'No title', tour_text: 'Error to get data' },
                         index: index
                     };
                 });
@@ -159,8 +159,8 @@ function startTour(pCssClass, pAppID, pPageId) {
                 .then(results => {
                     results.forEach(({ element, data, index }) => {
                         var stepId = 'step' + (index + 1);
-                        var stepTitle = data.tour_title || 'مرحله ' + (index + 1);
-                        var stepText = data.tour_text || 'توضیحات مرحله ' + (index + 1);
+                        var stepTitle = data.tour_title || 'step ' + (index + 1);
+                        var stepText = data.tour_text || 'Description of step ' + (index + 1);
                         var position = element.data('position') || 'bottom';
                         addStep(tour, stepId, stepTitle, stepText, element, position, index, classCount);
                     });

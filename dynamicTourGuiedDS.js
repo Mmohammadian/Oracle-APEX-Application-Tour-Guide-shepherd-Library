@@ -115,7 +115,6 @@ function startTour(pCssClass, pAppID, pPageId) {
     const classCount = getStepCount();
     addTourStyles();
     var overlay = $('<div>').addClass('tour-overlay').appendTo('body');
-    console.log('لایه روکش اضافه شد');
 
             var tour = new Shepherd.Tour({
                 defaults: {

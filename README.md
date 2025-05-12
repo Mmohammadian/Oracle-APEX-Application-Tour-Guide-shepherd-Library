@@ -42,6 +42,6 @@ PL/SQL Code :
 END;
 
 
-#any item you want have tour add css class
+# any item you want have tour add css class
 add specific css class for that item from table TBL_APPLICATION_TOUR
 Now you can run page and check your application tour

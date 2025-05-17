@@ -3,11 +3,13 @@ function addTourStyles() {
     style.type = 'text/css';
     style.innerHTML = `
         .stp-highlight { 
-            border: 2px solid #2e7d32; 
-            background-color:#fff;
+            border: 3px solid #2e7d32 !important;
+            background-color: rgba(255, 255, 255, 0.8) !important;
+            color:black !important;
             box-sizing: border-box; 
-            z-index: 1001; 
+            z-index: 1001 !important;
             position: relative; 
+            outline: 2px solid #2e7d32;
         }
         .tour-overlay { 
             position: fixed; 
@@ -38,18 +40,18 @@ function getDataForTour(pClassName) {
                     let result = typeof data === 'string' ? JSON.parse(data.trim()) : data;
                     if (Array.isArray(result) && result.length > 0) {
                         resolve({
-                            tour_title: result[0].TOUR_TITLE || 'No title',
-                            tour_text: result[0].TOUR_TEXT || 'No description'
+                            tour_title: result[0].TOUR_TITLE || 'مرحله بدون عنوان',
+                            tour_text: result[0].TOUR_TEXT || 'بدون توضیحات'
                         });
                     } else {
                         resolve({
-                            tour_title: 'step with out title',
-                            tour_text: 'No data forund for' + pClassName
+                            tour_title: 'مرحله بدون عنوان',
+                            tour_text: 'داده‌ای برای ' + pClassName + ' یافت نشد'
                         });
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error to get data', error);
+                    console.error('خطا در دریافت داده‌ها:', error);
                     reject(error);
                 }
             }
@@ -58,18 +60,31 @@ function getDataForTour(pClassName) {
 }
 
 function getStepCount() {
-    return $('[class*="stp"]').length;
+    var uniqueStpClasses = [];
+    $('[class*="stp"]').each(function() {
+        var stpClass = $(this).attr('class').split(' ').find(cls => cls.includes('stp'));
+        if (stpClass && !uniqueStpClasses.includes(stpClass)) {
+            uniqueStpClasses.push(stpClass);
+        }
+    });
+    // مرتب‌سازی کلاس‌ها بر اساس شماره
+    uniqueStpClasses.sort((a, b) => {
+        var numA = parseInt(a.replace('stp', '')) || 0;
+        var numB = parseInt(b.replace('stp', '')) || 0;
+        return numA - numB;
+    });
+    return uniqueStpClasses.length;
 }
 
 function addStep(tour, pStepName, pStepTitle, pStepText, pAttachToElement, pPosition, index, totalSteps) {
     const isStp1 = $(pAttachToElement).hasClass('stp1');
-    const isLastStep = index === totalSteps - 1; // Is a last step?
+    const isLastStep = index === totalSteps - 1;
 
     const buttons = [];
 
     if (!isLastStep) {
         buttons.push({
-            text: 'Close',
+            text: 'بستن',
             classes: 'shepherd-button-secondary',
             action: function() { return tour.cancel(); }
         });
@@ -77,7 +92,7 @@ function addStep(tour, pStepName, pStepTitle, pStepText, pAttachToElement, pPosi
 
     if (!isStp1) {
         buttons.push({
-            text: 'Pervius',
+            text: 'قبلی',
             classes: 'shepherd-button-secondary',
             action: function() { return tour.back(); },
             disabled: index === 0
@@ -85,7 +100,7 @@ function addStep(tour, pStepName, pStepTitle, pStepText, pAttachToElement, pPosi
     }
 
     buttons.push({
-        text: isLastStep ? 'End' : 'Next',
+        text: isLastStep ? 'پایان' : 'بعدی',
         action: tour.next,
         classes: 'shepherd-button-example-primary'
     });
@@ -115,62 +130,82 @@ function startTour(pCssClass, pAppID, pPageId) {
     const classCount = getStepCount();
     addTourStyles();
     var overlay = $('<div>').addClass('tour-overlay').appendTo('body');
+    console.log('لایه روکش اضافه شد');
 
-            var tour = new Shepherd.Tour({
-                defaults: {
-                    classes: pCssClass,
-                    scrollTo: false
-                }
-            });
-
-            tour.on('complete', function() {
-                $('.stp-highlight').removeClass('stp-highlight');
-                overlay.remove();
-                $('body').removeClass('tour-active');
-            });
-            tour.on('cancel', function() {
-                $('.stp-highlight').removeClass('stp-highlight');
-                overlay.remove();
-                $('body').removeClass('tour-active');
-            });
-
-            var stpElements = $('[class*="stp"]').toArray();
-            if (stpElements.length === 0) {
-                overlay.remove();
-                return;
-            }
-            var tourDataPromises = stpElements.map((element, index) => {
-                var className = $(element).attr('class').split(' ').find(cls => cls.includes('stp')) || 'stp' + (index + 1);
-                return getDataForTour(className, pAppID , pPageId).then(data => ({
-                    element: $(element),
-                    data: data,
-                    index: index
-                })).catch(error => {
-                    return {
-                        element: $(element),
-                        data: { tour_title: 'No title', tour_text: 'Error to get data' },
-                        index: index
-                    };
-                });
-            });
-
-            Promise.all(tourDataPromises)
-                .then(results => {
-                    results.forEach(({ element, data, index }) => {
-                        var stepId = 'step' + (index + 1);
-                        var stepTitle = data.tour_title || 'step ' + (index + 1);
-                        var stepText = data.tour_text || 'Description of step ' + (index + 1);
-                        var position = element.data('position') || 'bottom';
-                        addStep(tour, stepId, stepTitle, stepText, element, position, index, classCount);
-                    });
-
-                    if (classCount > 0) {
-                        tour.start();
-                    } else {
-                        overlay.remove();
-                    }
-                })
-                .catch(error => {
-                    overlay.remove();
-                });
+    var tour = new Shepherd.Tour({
+        defaults: {
+            classes: pCssClass,
+            scrollTo: false
         }
+    });
+
+    tour.on('complete', function() {
+        $('.stp-highlight').removeClass('stp-highlight');
+        overlay.remove();
+        $('body').removeClass('tour-active');
+    });
+    tour.on('cancel', function() {
+        $('.stp-highlight').removeClass('stp-highlight');
+        overlay.remove();
+        $('body').removeClass('tour-active');
+    });
+
+    // جمع‌آوری کلاس‌های منحصربه‌فرد stp
+    var uniqueStpClasses = [];
+    $('[class*="stp"]').each(function() {
+        var stpClass = $(this).attr('class').split(' ').find(cls => cls.includes('stp'));
+        if (stpClass && !uniqueStpClasses.includes(stpClass)) {
+            uniqueStpClasses.push(stpClass);
+        }
+    });
+
+    // مرتب‌سازی کلاس‌ها بر اساس شماره
+    uniqueStpClasses.sort((a, b) => {
+        var numA = parseInt(a.replace('stp', '')) || 0;
+        var numB = parseInt(b.replace('stp', '')) || 0;
+        return numA - numB;
+    });
+
+    // انتخاب اولین المنت برای هر کلاس stp
+    var stpElements = uniqueStpClasses.map(cls => $('.' + cls).first()[0]).filter(el => el);
+
+    if (stpElements.length === 0) {
+        overlay.remove();
+        return;
+    }
+
+    var tourDataPromises = stpElements.map((element, index) => {
+        var className = $(element).attr('class').split(' ').find(cls => cls.includes('stp')) || 'stp' + (index + 1);
+        return getDataForTour(className, pAppID, pPageId).then(data => ({
+            element: $(element),
+            data: data,
+            index: index
+        })).catch(error => {
+            return {
+                element: $(element),
+                data: { tour_title: 'مرحله بدون عنوان', tour_text: 'خطا در دریافت داده‌ها' },
+                index: index
+            };
+        });
+    });
+
+    Promise.all(tourDataPromises)
+        .then(results => {
+            results.forEach(({ element, data, index }) => {
+                var stepId = 'step' + (index + 1);
+                var stepTitle = data.tour_title || 'مرحله ' + (index + 1);
+                var stepText = data.tour_text || 'توضیحات مرحله ' + (index + 1);
+                var position = element.data('position') || 'bottom';
+                addStep(tour, stepId, stepTitle, stepText, element, position, index, uniqueStpClasses.length);
+            });
+
+            if (uniqueStpClasses.length > 0) {
+                tour.start();
+            } else {
+                overlay.remove();
+            }
+        })
+        .catch(error => {
+            overlay.remove();
+        });
+}
